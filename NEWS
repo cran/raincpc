@@ -1,0 +1,10 @@
+Version 0.1
+-----------
+
+* Ways to make the data download faster needs to be explored.
+
+* Future revision will include graphics functions to display the data. 
+  For now, visualization is done outside of the package. 
+  Examples from the project homepage help the user to visualize the 
+  processed CPC data using ggplot.
+    

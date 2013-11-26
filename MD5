@@ -1,0 +1,7 @@
+fb40162940705efd672699efe01ea7dc *DESCRIPTION
+ed5a3d7f070f84753a1741178e08416a *NAMESPACE
+c3932ef41d4bdab739adba8554c9819a *NEWS
+0f48f8020533e1fe41db435f6f0ac7f3 *R/cpc_get_rawdata.r
+0f403b912256c6ecdc288a3a8da045a6 *R/cpc_read_rawdata.r
+b8e0e323514b42b5fcd02313a9106a62 *man/cpc_get_rawdata.Rd
+e494180e8f13a161450914970a9ddd88 *man/cpc_read_rawdata.Rd
