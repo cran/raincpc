@@ -1,44 +1,46 @@
-#' Read downloaded raw rainfall data from CPC
+#' @title Read downloaded raw rainfall data from CPC
 #'
-#' This function reads raw data from CPC, downloaded using `cpc_get_rawdata` and
-#' outputs a matrix of values.
+#' @details The output matrix has 360 rows (latitudes) and 720 columns 
+#' (longitudes) of rainfall/precipitation in units of mm/day. The first data 
+#' point has the lat, lon values of -89.75 and 0.25 degrees, respectively. 
+#' Spatial resolution of the data is 0.5 degrees. 
 #' 
-#' Function checks for the existence of the raw files from CPC and only then
-#' attempts to process the data. 
+#' @param yr Year associated with the downloaded file, 1979 - present
+#' @param mo Month associated with the downloaded file, 1 - 12
+#' @param day Day associated with the downloaded file, 1 - 28/29/30/31
+#' @param raw_data_path location of downloaded cpc files
 #' 
-#' The output matrix has 360 rows (latitudes) and 720 columns (longitudes) of 
-#' rainfall/precipitation in units of mm/day. The first data point has the lat, 
-#' lon values of -89.75 and 0.25 degrees, respectively. Spatial resolution of 
-#' the data is 0.5 degrees. Refer to the project home page for plotting the 
-#' data with proper North-South orientation. 
+#' @return RasterLayer
 #' 
-#' By default, output matrix is NOT written to a binary file and raw input files
-#' will be DELETED. Change the input function arguments as desired.
-#' 
-#' @param yr year associated with the downloaded file, 1979 - 2012
-#' @param mo month associated with the downloaded file, 1 - 12
-#' @param day day associated with the downloaded file, 1 - 28/29/30/31
-#' @param remove_input logical, whether or not to remove the raw CPC file 
-#' after reading in
-#' @param write_output logical, whether or not to write the data to a binary 
-#' output file
 #' @export
+#' 
 #' @examples
-#' # CPC data for Jul 11 2005
-#' cpc_1day <- cpc_read_rawdata(2005, 7, 11)
-#' # CPC data for Jul 12 2005
-#' cpc_1day <- cpc_read_rawdata(2005, 7, 12)
+#' \dontrun{
+#' # CPC data for Jun 17 2014
+#' rain1 <- cpc_read_rawdata(2014, 6, 17)
+#' print(rain1)
+#' # CPC data for Jun 18 2014
+#' rain2 <- cpc_read_rawdata(2014, 6, 18)
+#' print(rain2)
+#' }
 
-cpc_read_rawdata <- function(yr, mo, day, remove_input = TRUE, write_output = FALSE) {
+cpc_read_rawdata <- function(yr, mo, day, raw_data_path = "") {
   
   stopifnot(!(any(c(yr, mo, day) %in% c(""))))
   
-  # file name
+  # construct file name
   dateStr <- paste0(yr, sprintf("%.2d", mo), sprintf("%.2d", day))
   cpcFile <- paste0("raw_", dateStr, ".bin")
   if (yr <= 2008) {
     cpcFile <- paste0("raw_", dateStr, ".gz")
   }
+  # append location of directory to file names
+  if (raw_data_path == "") {
+    raw_data_path <- getwd()
+  }
+  cpcFile <- file.path(raw_data_path, cpcFile)
+  
+  # check for files
   if(!(file.exists(cpcFile))) {
     stop("Raw file from CPC doesnt exist! First run cpc_get_rawdata()!")
   }
@@ -47,8 +49,10 @@ cpc_read_rawdata <- function(yr, mo, day, remove_input = TRUE, write_output = FA
   cpcNumLat   <- 360 # number of lats
   cpcNumLon   <- 720 # number of lons
   cpcNumBytes <- cpcNumLat * cpcNumLon * 2 # 2 fields, precipitation and num gages
+  cpc_xlc     <- 0.25
+  cpc_ylc     <- -89.75
+  cpc_res     <- 0.5
   
-  # read data
   # open file connection
   if (yr <= 2008) {
     fileCon <- gzcon(file(cpcFile, "rb"))
@@ -56,37 +60,38 @@ cpc_read_rawdata <- function(yr, mo, day, remove_input = TRUE, write_output = FA
     fileCon <- file(cpcFile, "rb")
   }
   
+  # read data
   inData  <- readBin(con = fileCon, 
                      what = numeric(), 
                      n = cpcNumBytes, 
                      size = 4)
   close(fileCon)
-  # remove input
-  if (remove_input) {
-    file.remove(cpcFile)
-  }
   
   # extract first field (precipitation), ignore second field (num gages)
   inData <- inData[1:(cpcNumBytes/2)]
-  
-  # CPC raw data goes from South to North; need to flip rows for plotting
-  prcpData <- array(0, dim = c(cpcNumLat, cpcNumLon))
-  for(eachRow in 1:cpcNumLat) {
-    index1 <- 1 + (eachRow - 1) * cpcNumLon
-    index2 <- eachRow * cpcNumLon
-    prcpData[eachRow, ] <- inData[index1:index2]
-  }
+    
+  # convert data to matrix
+  prcpData <- matrix(inData, ncol = cpcNumLat, nrow = cpcNumLon)
+
   # remove -ve (missing) values
   prcpData[prcpData < 0] <- NA
   # convert tenths of mm to mm
   prcpData <- ifelse(prcpData > 0, prcpData * 0.1, prcpData)
-  
+
   # write data to file
-  if (write_output) {
-    outCon <- file(paste0(dateStr, ".bin"), "wb")
-    writeBin(as.numeric(prcpData), con = outCon, size = 4)
-    close(outCon)
-  }
+  outCon <- file(paste0(dateStr, ".bin"), "wb")
+  writeBin(as.numeric(prcpData), con = outCon, size = 4)
+  close(outCon)
+  
+  # define prcpData's class attribs, consistent with SDMTools and adehabitat
+  attr(prcpData, "xll") <- cpc_xlc
+  attr(prcpData, "yll") <- cpc_ylc
+  attr(prcpData, "cellsize") <- cpc_res
+  attr(prcpData, "type") <- 'numeric'
+  class(prcpData) <- "asc"
+  
+  # convert to raster
+  prcpData <- raster.from.asc(prcpData)
   
   return (prcpData)
 }

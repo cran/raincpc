@@ -1,4 +1,17 @@
-Version 0.1
+Version 0.2 June 2014
+-----------
+
+* Added functionality to display rainfall data, output is a RasterLayer 
+  consistent with SDMTools. This change enables easier display and also 
+  extraction of regional data. 
+
+* Data extraction was limited to 2013 in v0.1, changed it to two days short of the present day
+
+* Added a R markdown vignette to demonstrate the use of the package
+
+* Changed license to MIT
+    
+Version 0.1 Nov 2013
 -----------
 
 * Ways to make the data download faster needs to be explored.

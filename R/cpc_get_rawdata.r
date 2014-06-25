@@ -1,33 +1,45 @@
-#' Download raw rainfall data from CPC for time period of interest
-#'
-#' This function obtains data from the CPC ftp site for any time period from
-#' 1979/1/1 to the present day.
+#' @title Download global rainfall data from CPC for the time period of interest
 #' 
-#' It is assumed that the ending year, month and day follow the beginning
-#' year, month and day. Although CPC data is revised each day, a buffer
-#' of two days is created - i.e., this function will only let you download
-#' data till the day before yesterday! 
-#' 
-#' Output is either a ".gz" file (1979 - 2008) or a ".bin" file (2009 - 2013). 
-#' 
-#' @param begYr beginning year of the time period of interest, 1979 - 2012
+#' @param begYr beginning year of the time period of interest, 1979 - present
 #' @param begMo beginning month of the time period of interest, 1 - 12
 #' @param begDay beginning day of the time period of interest, 1 - 28/29/30/31
-#' @param endYr ending year of the time period of interest, 1979 -2012
+#' @param endYr ending year of the time period of interest, 1979 - present
 #' @param endMo ending month of the time period of interest, 1 - 12
 #' @param endDay ending day of the time period of interest, 1 - 28/29/30/31
+#' 
+#' @return downloads either a ".gz" file (1979 - 2008) or a ".bin" file 
+#' (2009 - present)
+#' 
+#' @author Gopi Goteti
+#' 
 #' @export
+#' 
 #' @examples
-#' # CPC data for two days, Jul 11-12 2005
-#' cpc_get_rawdata(2005, 7, 11, 2005, 7, 12)
-
+#' \dontrun{
+#' # CPC data for two days, Jun 17-18 2014
+#' cpc_get_rawdata(2014, 6, 17, 2014, 6, 18)
+#' }
 cpc_get_rawdata <- function(begYr, begMo, begDay, endYr, endMo, endDay) {                            
   
+  # get current year
+  curr_year <- as.integer(format(Sys.Date(), "%Y"))
+  
   # check year validity
-  if (!(begYr %in% seq(1979, 2013) & endYr %in% seq(1979, 2013))) {
-    stop("Beginning and ending year should be between 1979 to 2013!")
+  if (!all(c(begYr, endYr) %in% seq(1979, curr_year))) {
+    stop("Beginning and ending year should be within 1979 and ", curr_year)
   }
-  # check dates validity
+  
+  # check month validity
+  if (!all(c(begMo, endMo) %in% seq(1, 12))) {
+    stop("Beginning and ending month should be within 1 and 12!")
+  }
+
+  # check day validity
+  if (!all(c(begDay, endDay) %in% seq(1, 31))) {
+    stop("Beginning and ending day should be within 1 and 31!")
+  }
+  
+  # check dates validity - sequential
   check_dates <- try(seq(as.Date(paste(begYr, begMo, begDay, sep = "-")), 
                          as.Date(paste(endYr, endMo, endDay, sep = "-")), 
                          by = "day"), 
@@ -35,6 +47,7 @@ cpc_get_rawdata <- function(begYr, begMo, begDay, endYr, endMo, endDay) {
   if (class(check_dates) == "try-error") {
     stop("Date range appears to be invalid!")
   }
+  
   # check dates validity - ensure end year, month and day are before present date
   check_dates <- try(seq(as.Date(paste(endYr, endMo, endDay, sep = "-")),
                          Sys.Date() - 2, 
@@ -69,7 +82,7 @@ cpc_get_rawdata <- function(begYr, begMo, begDay, endYr, endMo, endDay) {
     } else if (eachYr %in% c(2007, 2008)) {
       urlTag  <- "RT/"
       fileTag <- ".RT.gz"
-    } else { #if (eachYr %in% seq(2009, 2013)) {
+    } else { #if (eachYr %in% seq(2009, curr_year)) {
       urlTag  <- "RT/"
       fileTag <- ".RT"
     } 
