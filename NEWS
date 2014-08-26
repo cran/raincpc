@@ -1,3 +1,11 @@
+Version 0.3 August 2014
+-----------
+* Added functionality to also extract CPC USA data (1948 to present, 25 km resolution)
+
+* Fixed a bug with calculating the sequence of dates in `cpc_get_rawdata`
+
+* Fixed broken links in the package vignette
+
 Version 0.2 June 2014
 -----------
 

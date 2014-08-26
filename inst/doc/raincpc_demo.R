@@ -11,28 +11,28 @@ library(raster)
 library(ggplot2)
 
 ## ------------------------------------------------------------------------
-cpc_get_rawdata(2014, 6, 15, 2014, 6, 19) 
+cpc_get_rawdata(2014, 7, 1, 2014, 7, 7) 
 
 ## ------------------------------------------------------------------------
-rain1 <- cpc_read_rawdata(2014, 6, 15)
+rain1 <- cpc_read_rawdata(2014, 7, 1)
 print(rain1)
 
 ## ------------------------------------------------------------------------
-rain2 <- cpc_read_rawdata(2014, 6, 16)
-rain3 <- cpc_read_rawdata(2014, 6, 17)
-rain4 <- cpc_read_rawdata(2014, 6, 18)
-rain5 <- cpc_read_rawdata(2014, 6, 19)
+rain2 <- cpc_read_rawdata(2014, 7, 2)
+rain3 <- cpc_read_rawdata(2014, 7, 3)
+rain4 <- cpc_read_rawdata(2014, 7, 4)
+rain5 <- cpc_read_rawdata(2014, 7, 5)
+rain6 <- cpc_read_rawdata(2014, 7, 6)
+rain7 <- cpc_read_rawdata(2014, 7, 7)
 
-rain_tot <- rain1 + rain2 + rain3 + rain4 + rain5
+rain_tot <- rain1 + rain2 + rain3 + rain4 + rain5 + rain6 + rain7
 print(rain_tot)
 
 ## ------------------------------------------------------------------------
-png("gfx_rain1.png", width = 800, height = 600)
 plot(rain_tot, 
-     breaks = c(0, 80, 160, 240, 320),
+     breaks = c(0, 1, 90, 180, 270, 360),
      col = c("grey", "red", "green", "blue"), 
-     main = "Rainfall (mm) June 15 - June 19 2014")
-garbage <- dev.off()
+     main = "Rainfall (mm) July 1 - July 7, 2014")
 
 ## ------------------------------------------------------------------------
 raster_ggplot <- function(rastx) {
@@ -52,19 +52,18 @@ raster_ggplot <- function(rastx) {
 ## ------------------------------------------------------------------------
 rain_gg <- raster_ggplot(rain_tot)
 
-rain_gg$rain_chunks <- cut(rain_gg$rain, breaks = c(0, 80, 160, 240, 320), 
+rain_gg$rain_chunks <- cut(rain_gg$rain, breaks = c(0, 1, 90, 180, 270, 360), 
                          include.lowest = TRUE)
 
 gfx_gg <- ggplot(data = rain_gg)
 gfx_gg <- gfx_gg + geom_raster(aes(lons, lats, fill = rain_chunks))
-gfx_gg <- gfx_gg + scale_fill_manual(values = c("grey", "red", "green", "blue"))
+gfx_gg <- gfx_gg + scale_fill_manual(values = c("lightgrey", "grey", "red", "green", "blue"))
 gfx_gg <- gfx_gg + theme(axis.text = element_blank(), axis.ticks = element_blank())
 gfx_gg <- gfx_gg + labs(x = NULL, y = NULL, fill = "Rain (mm)")
-gfx_gg <- gfx_gg + ggtitle("Rainfall June 15 - June 19 2014")
+gfx_gg <- gfx_gg + ggtitle("Global Rainfall July 1 - July 7, 2014")
   
-png("gfx_rain2.png", width = 800, height = 600)
 plot(gfx_gg)
-garbage <- dev.off()
+
 
 ## ------------------------------------------------------------------------
 lon_vals <- seq(100.75, 130.75, 0.5)
@@ -72,18 +71,47 @@ lat_vals <- seq(-10.75, 20.75, 0.5)
 reg_box <- expand.grid(lons = lon_vals, lats = lat_vals, 
                             stringsAsFactors = FALSE, KEEP.OUT.ATTRS = FALSE)
 reg_box$rain <- extract.data(reg_box, rain_tot)
-reg_box$rain_chunks <- cut(reg_box$rain, breaks = c(0, 80, 160, 240, 320), 
+reg_box$rain_chunks <- cut(reg_box$rain, breaks = c(0, 1, 90, 180, 270, 360), 
                          include.lowest = TRUE)
 
 ## ------------------------------------------------------------------------
 gfx_gg <- ggplot(data = reg_box)
 gfx_gg <- gfx_gg + geom_raster(aes(lons, lats, fill = rain_chunks))
-gfx_gg <- gfx_gg + scale_fill_manual(values = c("grey", "red", "green", "blue"))
+gfx_gg <- gfx_gg + scale_fill_manual(values = c("lightgrey", "grey", "red", "green", "blue"))
 gfx_gg <- gfx_gg + theme(axis.text = element_blank(), axis.ticks = element_blank())
 gfx_gg <- gfx_gg + labs(x = NULL, y = NULL, fill = "Rain (mm)")
-gfx_gg <- gfx_gg + ggtitle("Rainfall over Southeast Asia June 15 - June 19 2014")
+gfx_gg <- gfx_gg + ggtitle("Rainfall over Southeast Asia July 1 - July 7, 2014")
   
-png("gfx_rain3.png")
 plot(gfx_gg)
-garbage <- dev.off()
+
+## ------------------------------------------------------------------------
+cpc_get_rawdata(2014, 7, 1, 2014, 7, 7, usa = TRUE) 
+rain1 <- cpc_read_rawdata(2014, 7, 1, usa = TRUE)
+print(rain1)
+
+rain2 <- cpc_read_rawdata(2014, 7, 2, usa = TRUE)
+rain3 <- cpc_read_rawdata(2014, 7, 3, usa = TRUE)
+rain4 <- cpc_read_rawdata(2014, 7, 4, usa = TRUE)
+rain5 <- cpc_read_rawdata(2014, 7, 5, usa = TRUE)
+rain6 <- cpc_read_rawdata(2014, 7, 6, usa = TRUE)
+rain7 <- cpc_read_rawdata(2014, 7, 7, usa = TRUE)
+
+rain_tot <- rain1 + rain2 + rain3 + rain4 + rain5 + rain6 + rain7
+print(rain_tot)
+
+## ------------------------------------------------------------------------
+rain_gg <- raster_ggplot(rain_tot)
+
+rain_gg$rain_chunks <- cut(rain_gg$rain, breaks = c(0, 1, 45, 90, 135, 180), 
+                         include.lowest = TRUE)
+
+gfx_gg <- ggplot(data = rain_gg)
+gfx_gg <- gfx_gg + geom_raster(aes(lons, lats, fill = rain_chunks))
+gfx_gg <- gfx_gg + scale_fill_manual(values = c("lightgrey", "grey", "red", "green", "blue"))
+gfx_gg <- gfx_gg + theme(axis.text = element_blank(), axis.ticks = element_blank())
+gfx_gg <- gfx_gg + labs(x = NULL, y = NULL, fill = "Rain (mm)")
+gfx_gg <- gfx_gg + ggtitle("USA Rainfall July 1 - July 7, 2014")
+  
+plot(gfx_gg)
+
 

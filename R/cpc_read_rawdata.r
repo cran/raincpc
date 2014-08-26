@@ -1,38 +1,53 @@
 #' @title Read downloaded raw rainfall data from CPC
 #'
-#' @details The output matrix has 360 rows (latitudes) and 720 columns 
-#' (longitudes) of rainfall/precipitation in units of mm/day. The first data 
-#' point has the lat, lon values of -89.75 and 0.25 degrees, respectively. 
-#' Spatial resolution of the data is 0.5 degrees. 
+#' @details For the global data - the output matrix has 360 rows (latitudes) 
+#' and 720 columns (longitudes) of rainfall/precipitation in units of mm/day; 
+#' the first data point has the lat, lon values of -89.75 and 0.25 degrees, 
+#' respectively; spatial resolution of the data is 0.5 degrees. For the USA
+#' data - the output matrix has 120 rows (latitudes) and 300 columns 
+#' (longitudes) of rainfall/precipitation in units of mm/day; the first data 
+#' point has the lat, lon values of 20.125 and 230.125 degrees, respectively; 
+#' spatial resolution of the data is 0.25 degrees.
 #' 
-#' @param yr Year associated with the downloaded file, 1979 - present
+#' @param yr Year associated with the downloaded file, 1979/1948 - present
 #' @param mo Month associated with the downloaded file, 1 - 12
 #' @param day Day associated with the downloaded file, 1 - 28/29/30/31
 #' @param raw_data_path location of downloaded cpc files
+#' @param usa logical flag to indicate whether global or usa data is desired
 #' 
-#' @return RasterLayer
+#' @return RasterLayer; also writes out a binary file containing the 
+#' RasterLayer data
+#' 
+#' @author Gopi Goteti
 #' 
 #' @export
 #' 
 #' @examples
 #' \dontrun{
-#' # CPC data for Jun 17 2014
-#' rain1 <- cpc_read_rawdata(2014, 6, 17)
+#' # CPC global data for July 4 2014
+#' rain1 <- cpc_read_rawdata(2014, 7, 4)
 #' print(rain1)
-#' # CPC data for Jun 18 2014
-#' rain2 <- cpc_read_rawdata(2014, 6, 18)
+#' # CPC USA data for July 4 2014
+#' rain2 <- cpc_read_rawdata(2014, 7, 4, usa = TRUE)
 #' print(rain2)
 #' }
 
-cpc_read_rawdata <- function(yr, mo, day, raw_data_path = "") {
+cpc_read_rawdata <- function(yr, mo, day, raw_data_path = "", usa = FALSE) {
   
   stopifnot(!(any(c(yr, mo, day) %in% c(""))))
   
   # construct file name
   dateStr <- paste0(yr, sprintf("%.2d", mo), sprintf("%.2d", day))
-  cpcFile <- paste0("raw_", dateStr, ".bin")
-  if (yr <= 2008) {
-    cpcFile <- paste0("raw_", dateStr, ".gz")
+  if (!usa) {
+    cpcFile <- paste0("global_raw_", dateStr, ".bin")
+    if (yr <= 2008) {
+      cpcFile <- paste0("global_raw_", dateStr, ".gz")
+    }
+  } else {
+    cpcFile <- paste0("usa_raw_", dateStr, ".bin")
+    if (yr <= 2008) {
+      cpcFile <- paste0("usa_raw_", dateStr, ".gz")
+    }    
   }
   # append location of directory to file names
   if (raw_data_path == "") {
@@ -45,13 +60,23 @@ cpc_read_rawdata <- function(yr, mo, day, raw_data_path = "") {
     stop("Raw file from CPC doesnt exist! First run cpc_get_rawdata()!")
   }
   
-  # data attributes, from PRCP_CU_GAUGE_V1.0GLB_0.50deg_README.txt
-  cpcNumLat   <- 360 # number of lats
-  cpcNumLon   <- 720 # number of lons
+  # data attributes
+  if (!usa) {
+    # from PRCP_CU_GAUGE_V1.0GLB_0.50deg_README.txt
+    cpcNumLat   <- 360 # number of lats
+    cpcNumLon   <- 720 # number of lons
+    cpc_xlc     <- 0.25
+    cpc_ylc     <- -89.75
+    cpc_res     <- 0.5
+  } else {
+    # from PRCP_CU_GAUGE_V1.0CONUS_0.25deg.README
+    cpcNumLat   <- 120 # number of lats
+    cpcNumLon   <- 300 # number of lons
+    cpc_xlc     <- 230.125
+    cpc_ylc     <- 20.125
+    cpc_res     <- 0.25    
+  }  
   cpcNumBytes <- cpcNumLat * cpcNumLon * 2 # 2 fields, precipitation and num gages
-  cpc_xlc     <- 0.25
-  cpc_ylc     <- -89.75
-  cpc_res     <- 0.5
   
   # open file connection
   if (yr <= 2008) {
@@ -79,7 +104,11 @@ cpc_read_rawdata <- function(yr, mo, day, raw_data_path = "") {
   prcpData <- ifelse(prcpData > 0, prcpData * 0.1, prcpData)
 
   # write data to file
-  outCon <- file(paste0(dateStr, ".bin"), "wb")
+  if (!usa) {
+    outCon <- file(paste0("global_", dateStr, ".bin"), "wb")
+  } else {
+    outCon <- file(paste0("usa_", dateStr, ".bin"), "wb")
+  }
   writeBin(as.numeric(prcpData), con = outCon, size = 4)
   close(outCon)
   
