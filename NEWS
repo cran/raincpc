@@ -1,10 +1,15 @@
+Version 0.4 August 2014
+-----------
+* Binary output files are written only if desired in `cpc_read_rawdata`.
+  Removed the explicit fixed number of bytes (4) used in the binary output.
+
 Version 0.3 August 2014
 -----------
-* Added functionality to also extract CPC USA data (1948 to present, 25 km resolution)
+* Added functionality to also extract CPC USA data (1948 to present, 25 km resolution).
 
-* Fixed a bug with calculating the sequence of dates in `cpc_get_rawdata`
+* Fixed a bug with calculating the sequence of dates in `cpc_get_rawdata`.
 
-* Fixed broken links in the package vignette
+* Fixed broken links in the package vignette.
 
 Version 0.2 June 2014
 -----------

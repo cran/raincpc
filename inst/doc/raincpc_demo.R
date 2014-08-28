@@ -115,3 +115,6 @@ gfx_gg <- gfx_gg + ggtitle("USA Rainfall July 1 - July 7, 2014")
 plot(gfx_gg)
 
 
+## ------------------------------------------------------------------------
+rain1 <- cpc_read_rawdata(2014, 7, 1, usa = TRUE, write_output = TRUE)
+

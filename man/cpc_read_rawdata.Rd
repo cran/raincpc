@@ -3,7 +3,8 @@
 \alias{cpc_read_rawdata}
 \title{Read downloaded raw rainfall data from CPC}
 \usage{
-cpc_read_rawdata(yr, mo, day, raw_data_path = "", usa = FALSE)
+cpc_read_rawdata(yr, mo, day, raw_data_path = "", usa = FALSE,
+  write_output = FALSE)
 }
 \arguments{
 \item{yr}{Year associated with the downloaded file, 1979/1948 - present}
@@ -15,10 +16,12 @@ cpc_read_rawdata(yr, mo, day, raw_data_path = "", usa = FALSE)
 \item{raw_data_path}{location of downloaded cpc files}
 
 \item{usa}{logical flag to indicate whether global or usa data is desired}
+
+\item{write_output}{logical flag to indicate whether binary output file should
+be written or not}
 }
 \value{
-RasterLayer; also writes out a binary file containing the
-RasterLayer data
+RasterLayer
 }
 \description{
 Read downloaded raw rainfall data from CPC

@@ -14,9 +14,10 @@
 #' @param day Day associated with the downloaded file, 1 - 28/29/30/31
 #' @param raw_data_path location of downloaded cpc files
 #' @param usa logical flag to indicate whether global or usa data is desired
+#' @param write_output logical flag to indicate whether binary output file should 
+#' be written or not
 #' 
-#' @return RasterLayer; also writes out a binary file containing the 
-#' RasterLayer data
+#' @return RasterLayer
 #' 
 #' @author Gopi Goteti
 #' 
@@ -32,7 +33,8 @@
 #' print(rain2)
 #' }
 
-cpc_read_rawdata <- function(yr, mo, day, raw_data_path = "", usa = FALSE) {
+cpc_read_rawdata <- function(yr, mo, day, raw_data_path = "", usa = FALSE, 
+                             write_output = FALSE) {
   
   stopifnot(!(any(c(yr, mo, day) %in% c(""))))
   
@@ -97,20 +99,22 @@ cpc_read_rawdata <- function(yr, mo, day, raw_data_path = "", usa = FALSE) {
     
   # convert data to matrix
   prcpData <- matrix(inData, ncol = cpcNumLat, nrow = cpcNumLon)
-
+  
+  # write data to file, if desired
+  if (write_output) {
+    if (!usa) {
+      outCon <- file(paste0("global_", dateStr, ".bin"), "wb")
+    } else {
+      outCon <- file(paste0("usa_", dateStr, ".bin"), "wb")
+    }
+    writeBin(as.numeric(prcpData), con = outCon)
+    close(outCon)
+  }
+  
   # remove -ve (missing) values
   prcpData[prcpData < 0] <- NA
   # convert tenths of mm to mm
   prcpData <- ifelse(prcpData > 0, prcpData * 0.1, prcpData)
-
-  # write data to file
-  if (!usa) {
-    outCon <- file(paste0("global_", dateStr, ".bin"), "wb")
-  } else {
-    outCon <- file(paste0("usa_", dateStr, ".bin"), "wb")
-  }
-  writeBin(as.numeric(prcpData), con = outCon, size = 4)
-  close(outCon)
   
   # define prcpData's class attribs, consistent with SDMTools and adehabitat
   attr(prcpData, "xll") <- cpc_xlc

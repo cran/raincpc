@@ -20,7 +20,7 @@ daily rainfall products available for free. Although raw data is available at CP
 Some issues with the raw CPC data:
 
 * too many files (365/366 files per year, 36 years of global data and 66 years of USA data, separate folder for each year)
-* each global file has 360 rows and 720 columns (USA file has 120 rows and 300 columns)
+* each global file is equivalent to a matrix of 360 rows and 720 columns (for USA specific files, 120 rows and 300 columns)
 * file naming conventions have changed over time - one format prior to 2006 and several different formats afterwards
 * file formats have changed over time - gzipped files prior to 2008 and plain binary files afterwards
 * downloading multiple files simultaneously from the CPC ftp site, for instance using wget, does not seem to work properly
@@ -182,6 +182,15 @@ gfx_gg <- gfx_gg + ggtitle("USA Rainfall July 1 - July 7, 2014")
   
 plot(gfx_gg)
 
+```
+
+
+# Writing Output
+
+The extracted rainfall data could be saved by setting the `write_output` flag to TRUE. The `write.asc` and related functions from *SDMTools* package could also be used to write the RasterLayer to output.
+
+```{r}
+rain1 <- cpc_read_rawdata(2014, 7, 1, usa = TRUE, write_output = TRUE)
 ```
 
 
