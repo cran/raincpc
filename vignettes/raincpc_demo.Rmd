@@ -1,7 +1,7 @@
-<!--
-%\VignetteEngine{knitr}
+
+%\VignetteEngine{knitr::knitr}
 %\VignetteIndexEntry{Package Demo: raincpc}
--->
+
 
 ```{r, echo = FALSE, message = FALSE}
 knitr::opts_chunk$set(
@@ -12,14 +12,14 @@ knitr::opts_chunk$set(
 
 # Introduction to *raincpc*
 
-The Climate Prediction Center's (CPC, www.cpc.ncep.noaa.gov) rainfall data for the 
+The Climate Prediction Center's (CPC, https://www.cpc.ncep.noaa.gov/) rainfall data for the 
 world (1979 to present, 50 km resolution) and the USA (1948 to present, 25 km 
 resolution), is one of the few high quality, long term, observation based, 
-daily rainfall products available for free. Although raw data is available at CPC's ftp site (ftp.cpc.ncep.noaa.gov/precip/CPC_UNI_PRCP/), obtaining, processing and visualizing the data is not straightforward. 
+daily rainfall products available for free. Although raw data is available at CPC's ftp site (https://ftp.cpc.ncep.noaa.gov/precip/CPC_UNI_PRCP/), obtaining, processing and visualizing the data is not straightforward. 
 
 Some issues with the raw CPC data:
 
-* too many files (365/366 files per year, 36 years of global data and 66 years of USA data, separate folder for each year)
+* too many files (365/366 files per year, more than 40 years of global data and more than 70 years of USA data, separate folder for each year)
 * each global file is equivalent to a matrix of 360 rows and 720 columns (for USA specific files, 120 rows and 300 columns)
 * file naming conventions have changed over time - one format prior to 2006 and several different formats afterwards
 * file formats have changed over time - gzipped files prior to 2008 and plain binary files afterwards
@@ -30,11 +30,10 @@ The package *raincpc* addresses the above drawbacks by providing functionality t
 
 # Using *raincpc*
 
-After installing the package, load the package along with *SDMTools*, *raster*, and *ggplot2*.
+Unless already installed/loaded, load *raincpc* along with *raster*, and *ggplot2*.
 
 ```{r, message = FALSE}
 library(raincpc)
-library(SDMTools)
 library(raster)
 library(ggplot2)
 ```
@@ -52,20 +51,18 @@ rain1 <- cpc_read_rawdata(2014, 7, 1)
 print(rain1)
 ```
 
-Extract the rainfall for all the seven days, and then compute the total rainfall for July 1-7. This rainfall total is used in the following graphics.
+Extract the rainfall for all the seven days, and then compute the total rainfall for July 1-7. One could either repeat the above `cpc_get_rawdata` as many times as needed, but if it becomes tedious, then use the `apply` family to run the command repeatedly. Below is an example using `mapply`. 
 
 ```{r}
-rain2 <- cpc_read_rawdata(2014, 7, 2)
-rain3 <- cpc_read_rawdata(2014, 7, 3)
-rain4 <- cpc_read_rawdata(2014, 7, 4)
-rain5 <- cpc_read_rawdata(2014, 7, 5)
-rain6 <- cpc_read_rawdata(2014, 7, 6)
-rain7 <- cpc_read_rawdata(2014, 7, 7)
-
-rain_tot <- rain1 + rain2 + rain3 + rain4 + rain5 + rain6 + rain7
-print(rain_tot)
+rain_vals <- mapply(FUN = cpc_read_rawdata, yr = 2014, mo = 7, day = 1:7, SIMPLIFY = FALSE, USE.NAMES = FALSE)
 ```
 
+Below is an efficient way of adding all the above rasters. This rainfall total is used in the following graphics.
+
+```{r}
+rain_tot <- Reduce("+", rain_vals)
+print(rain_tot)
+```
 
 # Graphics
 
@@ -74,20 +71,17 @@ Here is the plot of total rainfall for July 1-7 2014.
 ```{r}
 plot(rain_tot, 
      breaks = c(0, 1, 90, 180, 270, 360),
-     col = c("grey", "red", "green", "blue"), 
+     col = c("red", "orange", "yellow", "green", "blue"), 
      main = "Rainfall (mm) July 1 - July 7, 2014")
 ```
 
 
-Although it is easy to display the data using the plot method for a RasterLayer, the quality of the graphic is not great. Here is a plot of the same data using ggplot2. First, create a function to convert the data in a ggplot-friendly format.
+Although it is easy to display the data using the plot method for a RasterLayer, ggplot provides more flexibility. Here is a plot of the same data using ggplot2. First, create a function to convert the data to a ggplot-friendly format.
 
 ```{r}
-raster_ggplot <- function(rastx) {
-  require(SDMTools)
+prep_for_ggplot <- function(rastx) {
 
-  stopifnot(class(rastx) == "RasterLayer")
-  
-  gfx_data <- getXYcoords(rastx)
+  gfx_data <- sdm_getXYcoords(rastx)
   # lats need to be flipped
   gfx_data <- expand.grid(lons = gfx_data$x, lats = rev(gfx_data$y), 
                             stringsAsFactors = FALSE, KEEP.OUT.ATTRS = FALSE)
@@ -100,14 +94,14 @@ raster_ggplot <- function(rastx) {
 Use the above function to plot the RasterLayer object using ggplot2.
 
 ```{r}
-rain_gg <- raster_ggplot(rain_tot)
+rain_gg <- prep_for_ggplot(rain_tot)
 
 rain_gg$rain_chunks <- cut(rain_gg$rain, breaks = c(0, 1, 90, 180, 270, 360), 
                          include.lowest = TRUE)
 
 gfx_gg <- ggplot(data = rain_gg)
-gfx_gg <- gfx_gg + geom_raster(aes(lons, lats, fill = rain_chunks))
-gfx_gg <- gfx_gg + scale_fill_manual(values = c("lightgrey", "grey", "red", "green", "blue"))
+gfx_gg <- gfx_gg + geom_tile(aes(lons, lats, fill = rain_chunks))
+gfx_gg <- gfx_gg + scale_fill_manual(values = c("red", "orange", "yellow", "green", "blue"))
 gfx_gg <- gfx_gg + theme(axis.text = element_blank(), axis.ticks = element_blank())
 gfx_gg <- gfx_gg + labs(x = NULL, y = NULL, fill = "Rain (mm)")
 gfx_gg <- gfx_gg + ggtitle("Global Rainfall July 1 - July 7, 2014")
@@ -118,14 +112,14 @@ plot(gfx_gg)
 
 # Extracting Regional Rainfall
 
-When rainfall over other regions of the world is desired, *SDMTools* could be used. *SDMTools* has functionality to extract regional data from the RasterLayer object. In order to extract the data, say over Southeast Asia, specify a lat-lon bounding box as a data frame and extract the data for this box. 
+When rainfall over other regions of the world is desired, extract regional data from the RasterLayer object. In order to extract the data, say over Southeast Asia, specify a lat-lon bounding box as a data frame and extract the data for this box. 
 
 ```{r}
 lon_vals <- seq(100.75, 130.75, 0.5)
 lat_vals <- seq(-10.75, 20.75, 0.5)
 reg_box <- expand.grid(lons = lon_vals, lats = lat_vals, 
                             stringsAsFactors = FALSE, KEEP.OUT.ATTRS = FALSE)
-reg_box$rain <- extract.data(reg_box, rain_tot)
+reg_box$rain <- sdm_extract_data(reg_box, rain_tot)
 reg_box$rain_chunks <- cut(reg_box$rain, breaks = c(0, 1, 90, 180, 270, 360), 
                          include.lowest = TRUE)
 ```
@@ -134,8 +128,8 @@ Use ggplot to plot the regional rainfall over Southeast Asia.
 
 ```{r}
 gfx_gg <- ggplot(data = reg_box)
-gfx_gg <- gfx_gg + geom_raster(aes(lons, lats, fill = rain_chunks))
-gfx_gg <- gfx_gg + scale_fill_manual(values = c("lightgrey", "grey", "red", "green", "blue"))
+gfx_gg <- gfx_gg + geom_tile(aes(lons, lats, fill = rain_chunks))
+gfx_gg <- gfx_gg + scale_fill_manual(values = c("red", "orange", "yellow", "green", "blue"))
 gfx_gg <- gfx_gg + theme(axis.text = element_blank(), axis.ticks = element_blank())
 gfx_gg <- gfx_gg + labs(x = NULL, y = NULL, fill = "Rain (mm)")
 gfx_gg <- gfx_gg + ggtitle("Rainfall over Southeast Asia July 1 - July 7, 2014")
@@ -146,36 +140,32 @@ plot(gfx_gg)
 
 # Extracting Rainfall only for the USA
 
-The default options in *raincpc* were set to extract and analyze data for the whole world. However, CPC also provides higher resolution (25 km instead of 50 km for the world) rainfall data for the USA. The *raincpc* package could be used with the flag `usa = TRUE` for USA-specific data.
+The default options in *raincpc* were set to extract and analyze data for the whole world. However, CPC also provides higher resolution rainfall data for the USA (25 km instead of 50 km). The *raincpc* package could be used with the flag `usa = TRUE` for USA-specific data.
 
 Similar to the above example, rainfall data for the USA for July 1-7 of 2014 is extracted below.
 
 ```{r}
 cpc_get_rawdata(2014, 7, 1, 2014, 7, 7, usa = TRUE) 
-rain1 <- cpc_read_rawdata(2014, 7, 1, usa = TRUE)
-print(rain1)
+```
 
-rain2 <- cpc_read_rawdata(2014, 7, 2, usa = TRUE)
-rain3 <- cpc_read_rawdata(2014, 7, 3, usa = TRUE)
-rain4 <- cpc_read_rawdata(2014, 7, 4, usa = TRUE)
-rain5 <- cpc_read_rawdata(2014, 7, 5, usa = TRUE)
-rain6 <- cpc_read_rawdata(2014, 7, 6, usa = TRUE)
-rain7 <- cpc_read_rawdata(2014, 7, 7, usa = TRUE)
+Similar to the global example, rainfall totals are obtained below.
 
-rain_tot <- rain1 + rain2 + rain3 + rain4 + rain5 + rain6 + rain7
+```{r}
+rain_vals <- mapply(FUN = cpc_read_rawdata, yr = 2014, mo = 7, day = 1:7, usa = TRUE, SIMPLIFY = FALSE, USE.NAMES = FALSE)
+rain_tot <- Reduce("+", rain_vals)
 print(rain_tot)
 ```
 
 
 ```{r}
-rain_gg <- raster_ggplot(rain_tot)
+rain_gg <- prep_for_ggplot(rain_tot)
 
 rain_gg$rain_chunks <- cut(rain_gg$rain, breaks = c(0, 1, 45, 90, 135, 180), 
                          include.lowest = TRUE)
 
 gfx_gg <- ggplot(data = rain_gg)
-gfx_gg <- gfx_gg + geom_raster(aes(lons, lats, fill = rain_chunks))
-gfx_gg <- gfx_gg + scale_fill_manual(values = c("lightgrey", "grey", "red", "green", "blue"))
+gfx_gg <- gfx_gg + geom_tile(aes(lons, lats, fill = rain_chunks))
+gfx_gg <- gfx_gg + scale_fill_manual(values = c("red", "orange", "yellow", "green", "blue"))
 gfx_gg <- gfx_gg + theme(axis.text = element_blank(), axis.ticks = element_blank())
 gfx_gg <- gfx_gg + labs(x = NULL, y = NULL, fill = "Rain (mm)")
 gfx_gg <- gfx_gg + ggtitle("USA Rainfall July 1 - July 7, 2014")
@@ -187,7 +177,7 @@ plot(gfx_gg)
 
 # Writing Output
 
-The extracted rainfall data could be saved by setting the `write_output` flag to TRUE. The `write.asc` and related functions from *SDMTools* package could also be used to write the RasterLayer to output.
+The extracted rainfall data could be saved by setting the `write_output` flag to TRUE.
 
 ```{r}
 rain1 <- cpc_read_rawdata(2014, 7, 1, usa = TRUE, write_output = TRUE)

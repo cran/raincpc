@@ -1,3 +1,8 @@
+Version 1.1 January 2019
+-----------
+* SDMTools library has been archived; removing dependencies on SDMTools and
+  revising code as needed
+
 Version 0.4 August 2014
 -----------
 * Binary output files are written only if desired in `cpc_read_rawdata`.
@@ -14,23 +19,22 @@ Version 0.3 August 2014
 Version 0.2 June 2014
 -----------
 
-* Added functionality to display rainfall data, output is a RasterLayer 
-  consistent with SDMTools. This change enables easier display and also 
-  extraction of regional data. 
+* Added functionality to display rainfall data, output is a RasterLayer
+  consistent with SDMTools. This change enables easier display and also
+  extraction of regional data.
 
 * Data extraction was limited to 2013 in v0.1, changed it to two days short of the present day
 
 * Added a R markdown vignette to demonstrate the use of the package
 
 * Changed license to MIT
-    
+
 Version 0.1 Nov 2013
 -----------
 
 * Ways to make the data download faster needs to be explored.
 
-* Future revision will include graphics functions to display the data. 
-  For now, visualization is done outside of the package. 
-  Examples from the project homepage help the user to visualize the 
+* Future revision will include graphics functions to display the data.
+  For now, visualization is done outside of the package.
+  Examples from the project homepage help the user to visualize the
   processed CPC data using ggplot.
-    
